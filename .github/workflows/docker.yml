@@ -1,51 +1,41 @@
-version: '3.9'
+name: Build and Publish Docker Image
 
-services:
+on:
+  push:
+    branches:
+      - main
 
-  db:
+permissions:
+  contents: read
+  packages: write
 
-    image: postgres:17-alpine
+env:
+  IMAGE_NAME: devops-flask-postgres
+  IMAGE_TAG: 2.0.0
 
-    container_name: postgresdb
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-    environment:
-      POSTGRES_DB: empresa
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin123
+    steps:
+      - name: Descargar Código
+        uses: actions/checkout@v4
 
-    ports:
-      - "5432:5432"
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - name: Construir Imagen
+        run: |
+          docker build \
+          -t ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }} \
+          -t ghcr.io/${{ github.repository }}:latest \
+          .
 
-  pgadmin:
-
-    image: dpage/pgadmin4
-
-    container_name: pgadmin
-
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@correo.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
-
-    ports:
-      - "8080:80"
-
-    depends_on:
-      - db
-
-  app:
-
-    image: ghcr.io/usuario/devops-flask-postgres:2.0.0
-
-    container_name: flaskapp
-
-    ports:
-      - "5000:5000"
-
-    depends_on:
-      - db
-
-volumes:
-  postgres_data:
+      - name: Publicar Imagen
+        run: |
+          docker push ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}
+          docker push ghcr.io/${{ github.repository }}:latest
