@@ -10,7 +10,6 @@ permissions:
   packages: write
 
 env:
-  IMAGE_NAME: devops-flask-postgres
   IMAGE_TAG: 2.0.0
 
 jobs:
@@ -30,12 +29,14 @@ jobs:
 
       - name: Construir Imagen
         run: |
+          IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}
           docker build \
-          -t ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }} \
-          -t ghcr.io/${{ github.repository }}:latest \
-          .
+            -t $IMAGE:${{ env.IMAGE_TAG }} \
+            -t $IMAGE:latest \
+            .
 
       - name: Publicar Imagen
         run: |
-          docker push ghcr.io/${{ github.repository }}:${{ env.IMAGE_TAG }}
-          docker push ghcr.io/${{ github.repository }}:latest
+          IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}
+          docker push $IMAGE:${{ env.IMAGE_TAG }}
+          docker push $IMAGE:latest
